@@ -1,0 +1,36 @@
+version: 2
+
+seeds:
+  - name: uz_holidays
+    description: >
+      O'zbekiston Respublikasining rasmiy milliy bayramlari.
+      Manba: O'zR Mehnat kodeksi va hukumat qarorlari.
+      2024-2026 yillarni qamrab oladi.
+      Yangi yillar uchun PR yuboring yoki issue oching.
+    config:
+      column_types:
+        holiday_date: date
+        is_annual_recurring: boolean
+    columns:
+      - name: holiday_date
+        description: Bayram sanasi (DATE)
+        tests:
+          - not_null
+          - unique
+      - name: holiday_name_uz
+        description: Bayram nomi (o'zbekcha)
+        tests:
+          - not_null
+      - name: holiday_name_en
+        description: Bayram nomi (inglizcha)
+        tests:
+          - not_null
+      - name: is_annual_recurring
+        description: >
+          Har yili takrorlanadigan bayrammi?
+          true — har yili bir xil oy-kun (masalan, 1-yanvar).
+          false — bir martalik yoki sana o'zgaruvchan (masalan, diniy bayramlar).
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]

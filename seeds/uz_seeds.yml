@@ -1,0 +1,90 @@
+version: 2
+
+seeds:
+  - name: uz_districts
+    description: >
+      O'zbekiston tumanlari va shaharlarining to'liq ro'yxati.
+      Har bir tuman viloyat ISO kodi (uz_regions seed) bilan bog'langan.
+      DIQQAT (v0.2): Tuman kodlari (district_code) rasmiy davlat
+      registridan emas, shu paket uchun shartli kod sifatida berilgan.
+      Agar rasmiy SOATO kodlari kerak bo'lsa, PR yuboring.
+    config:
+      column_types:
+        district_code: integer
+    columns:
+      - name: district_code
+        description: Paket ichidagi shartli tuman kodi
+        tests:
+          - not_null
+          - unique
+      - name: district_name_uz
+        description: Tuman nomi (o'zbekcha)
+        tests:
+          - not_null
+      - name: district_name_en
+        description: Tuman nomi (inglizcha)
+      - name: region_iso
+        description: Viloyat ISO 3166-2 kodi (uz_regions bilan join uchun)
+        tests:
+          - not_null
+          - relationships:
+              to: ref('uz_utils', 'uz_regions')
+              field: iso_code
+      - name: center_uz
+        description: Tuman markazi (shahar yoki qishloq nomi)
+
+  - name: uz_banks
+    description: >
+      O'zbekiston Respublikasi tijorat banklarining MFO kodlari va nomlari.
+      DIQQAT (v0.2): MFO kodlari ochiq manbalarga asoslangan.
+      Rasmiy va yangilangan ro'yxat uchun O'zR Markaziy banki saytiga
+      murojaat qiling: cbu.uz. Yangi bank yoki o'zgarish bo'lsa PR yuboring.
+    config:
+      column_types:
+        mfo_code: "{{ 'varchar(5)' }}"
+    columns:
+      - name: mfo_code
+        description: Bank MFO kodi (5 xonali)
+        tests:
+          - not_null
+          - unique
+      - name: bank_name_uz
+        description: Bank nomi (o'zbekcha)
+        tests:
+          - not_null
+      - name: bank_name_en
+        description: Bank nomi (inglizcha)
+      - name: bank_short
+        description: Bank qisqa nomi/abbreviaturasi
+      - name: swift_code
+        description: Bank SWIFT/BIC kodi (xalqaro o'tkazmalar uchun)
+
+  - name: uz_holidays
+    description: >
+      O'zbekiston Respublikasining rasmiy milliy bayramlari.
+      Manba: O'zR Mehnat kodeksi va hukumat qarorlari.
+      2024-2026 yillarni qamrab oladi.
+    config:
+      column_types:
+        holiday_date: date
+        is_annual_recurring: boolean
+    columns:
+      - name: holiday_date
+        description: Bayram sanasi
+        tests:
+          - not_null
+          - unique
+      - name: holiday_name_uz
+        description: Bayram nomi (o'zbekcha)
+        tests:
+          - not_null
+      - name: holiday_name_en
+        description: Bayram nomi (inglizcha)
+        tests:
+          - not_null
+      - name: is_annual_recurring
+        description: Har yili bir xil sanada takrorlanadimi
+        tests:
+          - not_null
+          - accepted_values:
+              values: [true, false]

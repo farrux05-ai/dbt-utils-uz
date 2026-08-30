@@ -1,5 +1,8 @@
 # uz_utils
 
+[![dbt](https://img.shields.io/badge/dbt-%3E%3D1.6-orange)](https://getdbt.com)
+[![license](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
+
 > **O'zbekiston uchun dbt macro'lar kutubxonasi**
 
 O'zbekiston bozorida ishlaydigan har qanday data jamoa bir xil muammolarga duch keladi:
@@ -35,8 +38,6 @@ dbt deps
 
 ### 🪪 Identifikatorlar
 
-O'zbekistonda ikki turdagi asosiy identifikator bor: jismoniy shaxslar uchun **PINFL** (14 xona), yuridik shaxslar uchun **STIR/INN** (9 xona).
-
 | Macro | Nima qiladi |
 |---|---|
 | `uz_utils.is_valid_pinfl(column)` | PINFL formatini tekshiradi (14 raqam + 1–6 birinchi xona) |
@@ -44,6 +45,11 @@ O'zbekistonda ikki turdagi asosiy identifikator bor: jismoniy shaxslar uchun **P
 | `uz_utils.pinfl_birth_date(column)` | PINFL'dan tug'ilgan sanani ajratadi → `DATE` turi |
 | `uz_utils.pinfl_region_code(column)` | PINFL'dan hudud kodini ajratadi (8–10-xonalar) |
 | `uz_utils.is_valid_stir(column)` | STIR/INN formatini tekshiradi (9 raqam) |
+| `uz_utils.is_valid_passport(column)` | Passport formatini tekshiradi: `AB 1234567` standart ko'rinish |
+| `uz_utils.normalize_passport(column)` | `'ab1234567'`, `'AB-1234567'` → `'AB 1234567'` |
+| `uz_utils.is_valid_mfo(column)` | Bank MFO kodini tekshiradi (5 xonali raqam) |
+| `uz_utils.mfo_to_bank_name(column)` | MFO kodi → bank nomi (`uz_banks` seed orqali) |
+| `uz_utils.mfo_to_bank_short(column)` | MFO kodi → bank qisqa nomi |
 
 **PINFL tuzilishi:**
 
@@ -67,8 +73,6 @@ Pozitsiya:  1       2–7       8–10    11–13   14
 
 ### 📞 Telefon raqamlari
 
-O'zbek raqamlar bazalarda ko'plab formatlarda saqlangan bo'ladi. Bu macro'lar ularni standartlashtiradi.
-
 | Macro | Nima qiladi |
 |---|---|
 | `uz_utils.normalize_uz_phone(column)` | Har qanday formatni `+998XXXXXXXXX` ga keltiradi |
@@ -83,34 +87,24 @@ O'zbek raqamlar bazalarda ko'plab formatlarda saqlangan bo'ladi. Bu macro'lar ul
 901234567         →  +998901234567
 ```
 
-> **Eslatma:** Operator kodi ajratiladi, lekin operator nomiga (`UzMobile`, `Beeline` va h.k.) map qilinmaydi — bu ro'yxat tez-tez o'zgaradi, shuning uchun uni seed orqali o'z loyihangizda saqlash tavsiya etiladi.
-
 ---
 
 ### 💳 To'lov tizimlari
 
-UzCard va Humo kartalari O'zbekistonga xos BIN raqamlariga ega.
-
 | Macro | Nima qiladi |
 |---|---|
-| `uz_utils.detect_card_network(column)` | Karta tizimini aniqlaydi |
-| `uz_utils.mask_card_number(column)` | Karta raqamini PII uchun maskalaydi |
+| `uz_utils.detect_card_network(column)` | Karta tizimini BIN bo'yicha aniqlaydi (`uzcard`/`humo`/`visa`/...) |
+| `uz_utils.mask_card_number(column)` | Karta raqamini PII uchun maskalaydi: `8600 **** **** 1234` |
+| `uz_utils.detect_payment_system(column)` | To'lov kanalini aniqlaydi: `click`/`payme`/`apelsin`/`uzum`/`bank_transfer`/`cash` |
 
-**`detect_card_network` natijasi:**
-
-| BIN | Natija |
-|---|---|
-| `8600****` | `uzcard` |
-| `9860****` | `humo` |
-| `4*******` | `visa` |
-| `51–55****` | `mastercard` |
-| `62******` | `unionpay` |
-| boshqa | `unknown` |
-
-**`mask_card_number` misoli:**
-
+**`detect_payment_system` misollari:**
 ```
-8600123456781234  →  8600 **** **** 1234
+'CLICK'        →  'click'
+'PayMe'        →  'payme'
+'apelsin'      →  'apelsin'
+'Uzum Bank'    →  'uzum'
+'naqd'         →  'cash'
+null           →  'unknown'
 ```
 
 ---
@@ -119,40 +113,73 @@ UzCard va Humo kartalari O'zbekistonga xos BIN raqamlariga ega.
 
 | Macro / Seed | Nima qiladi |
 |---|---|
-| `uz_utils.normalize_region_name(column)` | Xilma-xil yozilgan hudud nomini ISO 3166-2:UZ kodiga keltiradi |
-| `seed: uz_regions` | 14 ta hudud: ISO kod, uz/en/ru nomi, markaz shahri |
+| `uz_utils.normalize_region_name(column)` | Viloyat nomini ISO 3166-2:UZ kodiga keltiradi |
+| `uz_utils.normalize_district_name(column)` | Tuman nomini standart o'zbek nomi ko'rinishiga keltiradi |
+| `seed: uz_regions` | 14 ta viloyat: ISO kod, uz/en/ru nomi, markaz shahri |
+| `seed: uz_districts` | 160+ tuman: kod, nomi, viloyat ISO kodi, markaz |
 
 **`normalize_region_name` misollari:**
-
-```sql
+```
 'Toshkent shahri'  →  'UZ-TK'
 'Tashkent city'    →  'UZ-TK'
-'г.Ташкент'        →  'UZ-TK'
 'Andijon'          →  'UZ-AN'
-'Fergana region'   →  'UZ-FA'
 "Farg'ona"         →  'UZ-FA'
 ```
 
-> ⚠️ `"Toshkent"` yolg'iz holda `NULL` qaytaradi — bu shahar (UZ-TK) yoki viloyat (UZ-TO) ekanligi noaniq. Agar sizning ma'lumotlaringizda bu so'z doim bitta narsani anglatsa, macro'ni o'z loyihangizda override qiling.
-
-**`uz_regions` seed foydalanish:**
-
-```sql
-select
-    c.customer_id,
-    r.name_uz,
-    r.name_en,
-    r.capital_uz
-from {{ ref('stg_customers') }} c
-left join {{ ref('uz_utils', 'uz_regions') }} r
-    on {{ uz_utils.normalize_region_name('c.region_raw') }} = r.iso_code
+**`normalize_district_name` misollari:**
 ```
+'Yunusobod'       →  'Yunusobod tumani'
+'Yunusabad'       →  'Yunusobod tumani'
+'Chilonzor r.'    →  'Chilonzor tumani'
+'noma\'lum joy'   →  null
+```
+
+---
+
+### 📅 Sana va ish kunlari
+
+| Macro / Seed | Nima qiladi |
+|---|---|
+| `uz_utils.is_uz_holiday(column)` | Sana milliy bayrammi? (`uz_holidays` seed orqali) |
+| `uz_utils.is_working_day(column)` | Ish kunmi? (Shanba/Yakshanba va bayramlar — ish kuni emas) |
+| `seed: uz_holidays` | 2024–2026 yillardagi rasmiy milliy bayramlar |
+
+**Misol:**
+```
+'2024-03-21' (Navro'z)   →  is_uz_holiday: true   is_working_day: false
+'2024-03-23' (Shanba)    →  is_uz_holiday: false   is_working_day: false
+'2024-03-18' (Dushanba)  →  is_uz_holiday: false   is_working_day: true
+```
+
+---
+
+### 💰 Moliya (Finance)
+
+| Macro | Nima qiladi |
+|---|---|
+| `uz_utils.format_uzs(column)` | Sonni minglik ajratgichli formatga keltiradi: `1250000` → `'1 250 000'` |
+| `uz_utils.is_post_denomination(date_column)` | 2017-10-01 dan keyin (yangi so'm) ekanligini tekshiradi |
+
+---
+
+### 🔒 Maxfiylik (PII / Compliance)
+
+| Macro | Nima qiladi |
+|---|---|
+| `uz_utils.mask_pinfl(column)` | `'31234560012345'` → `'3************5'` |
+| `uz_utils.mask_phone(column)` | `'+998901234567'` → `'+99890****567'` |
+| `uz_utils.mask_passport(column)` | `'AB 1234567'` → `'AB ****567'` |
 
 ---
 
 ### ⚙️ Cross-database (ichki)
 
-`macros/cross_db/_regexp.sql` — barcha regex operatsiyalar shu fayl orqali yo'naltiriladi. Yangi warehouse qo'shish uchun shu faylga `<adapter_nomi>__uz_regexp_like` va `<adapter_nomi>__uz_regexp_replace` qo'shish kifoya.
+`macros/cross_db/` — barcha SQL dialekt farqlari shu papkada yashiriladi.
+
+| Fayl | Nima qiladi |
+|---|---|
+| `_regexp.sql` | `uz_regexp_like()`, `uz_regexp_replace()` |
+| `_datetime.sql` | `uz_dayofweek()` — 1=Du, 7=Ya, barcha omborlarda bir xil |
 
 **Qo'llab-quvvatlanadigan warehouse'lar:**
 
@@ -164,7 +191,7 @@ left join {{ ref('uz_utils', 'uz_regions') }} r
 | Snowflake | ✅ Default |
 | Spark | ✅ Sinovdan o'tgan |
 | Databricks | ✅ Sinovdan o'tgan |
-| ClickHouse | ⚠️ Mantiqiy jihatdan to'g'ri, lekin real instansiyada sinovdan o'tmagan |
+| ClickHouse | ⚠️ Mantiqiy jihatdan to'g'ri, real instansiyada sinovdan o'tmagan |
 
 ---
 
@@ -174,62 +201,63 @@ left join {{ ref('uz_utils', 'uz_regions') }} r
 -- models/staging/stg_customers_enriched.sql
 select
     customer_id,
-    customer_pinfl,
 
-    -- Identifikator validatsiyasi
-    {{ uz_utils.is_valid_pinfl('customer_pinfl') }}    as pinfl_is_valid,
-    {{ uz_utils.pinfl_gender('customer_pinfl') }}      as gender,
-    {{ uz_utils.pinfl_birth_date('customer_pinfl') }}  as birth_date,
+    -- Identifikatorlar
+    {{ uz_utils.is_valid_pinfl('customer_pinfl') }}       as pinfl_is_valid,
+    {{ uz_utils.pinfl_gender('customer_pinfl') }}         as gender,
+    {{ uz_utils.pinfl_birth_date('customer_pinfl') }}     as birth_date,
+    {{ uz_utils.is_valid_passport('passport_raw') }}      as passport_is_valid,
+    {{ uz_utils.normalize_passport('passport_raw') }}     as passport_clean,
+    {{ uz_utils.is_valid_stir('company_stir') }}          as stir_is_valid,
+    {{ uz_utils.mfo_to_bank_name('bank_mfo') }}           as bank_name,
 
-    -- Telefon normalizatsiyasi
-    {{ uz_utils.normalize_uz_phone('raw_phone') }}     as phone_normalized,
-    {{ uz_utils.uz_phone_operator('raw_phone') }}      as phone_operator_code,
+    -- Telefon
+    {{ uz_utils.normalize_uz_phone('raw_phone') }}        as phone_normalized,
 
-    -- Karta
-    {{ uz_utils.detect_card_network('card_number') }}  as card_network,
-    {{ uz_utils.mask_card_number('card_number') }}     as card_masked,
+    -- To'lov
+    {{ uz_utils.detect_card_network('card_number') }}     as card_network,
+    {{ uz_utils.detect_payment_system('payment_source') }}as payment_system,
 
     -- Hudud
-    {{ uz_utils.normalize_region_name('region_raw') }} as region_iso
+    {{ uz_utils.normalize_region_name('region_raw') }}   as region_iso,
+    {{ uz_utils.normalize_district_name('district_raw') }}as district_name,
+
+    -- Sana
+    {{ uz_utils.is_working_day('order_date') }}           as is_working_day,
+    {{ uz_utils.is_uz_holiday('order_date') }}            as is_holiday,
+
+    -- Moliya
+    {{ uz_utils.format_uzs('amount') }}                   as amount_formatted,
+    {{ uz_utils.is_post_denomination('transaction_date') }}as is_new_uzs,
+
+    -- PII maskalash (mart qatlamiga o'tmasin)
+    {{ uz_utils.mask_pinfl('customer_pinfl') }}           as pinfl_masked,
+    {{ uz_utils.mask_phone('raw_phone') }}                as phone_masked
 
 from {{ ref('raw_customers') }}
 ```
 
 ---
 
-## Rejadagi macro'lar (v0.2+)
+## Rejadagi macro'lar (v0.3+)
 
-Bu yerda ishni osonlashtirishi mumkin bo'lgan keyingi macro'lar g'oyalari bor. Har biri kimningdir kunlik manual ishi bo'lgan muammo. **Agar sizda ham shunday takroriy ish bo'lsa — quyidagi bo'limga qo'shing yoki PR yuboring.**
+Har biri kimningdir kunlik manual ishi. **Sizda ham shunday takroriy ish bo'lsa — PR yuboring.**
 
-### Tuman (district) ma'lumotnomasi
-- O'zbekistondagi 175 ta tuman va shaharning reference seed'i
-- Har bir tuman ISO viloyat kodi bilan bog'langan
-- Foydalanish: manzil normalizatsiyasi, geo tahlil
+### IBAN / bank hisob raqami validatsiyasi
+- O'zbekiston bank hisob raqami formati: 20 xonali
+- `uz_utils.is_valid_bank_account(column)` macro'si
 
-### Milliy bayramlar va ish kunlari
-- O'zbekiston milliy bayramlari seed'i (yillik yangilanadi)
-- `uz_utils.is_working_day(date_column)` macro'si
-- Foydalanish: SLA hisoblash, kechikish tahlili, to'lov muddatlarini hisoblash
+### OKED faoliyat turi kodi
+- `seeds/uz_oked.csv` — faoliyat turlari klassifikatori
+- `uz_utils.is_valid_oked(column)` macro'si
 
-### So'm formatlash
-- `uz_utils.format_uzs(amount_column)` — minglik ajratgich bilan (`1 250 000 so'm`)
-- 2017-yil denominatsiya eslatmasi (eski vs yangi so'm)
+### Telefon operator nomi
+- `seeds/uz_phone_operators.csv` — operator kodi → nomi (UMS, Beeline, Ucell...)
+- Tez-tez o'zgaradi — shuning uchun seed sifatida ajratilgan
 
-### IBAN / hisob raqam tekshiruvi
-- O'zbekiston bank hisob raqami formatini validatsiya qilish (20 xonali)
-- Foydalanish: fintech, bank to'lovlarini qayta ishlash
-
-### Passport seriya + raqam
-- O'zbekiston pasporti formatini tekshirish (AA 1234567)
-- Foydalanish: shaxs identifikatsiyasi
-
-### To'lov tizimi operatori
-- CLICK, Payme, Apelsin, Uzum Bank tranzaksiya ma'lumotlarini normalizatsiya
-- Foydalanish: to'lov kanal tahlili
-
-### MFO (bank kodi) ma'lumotnomasi
-- O'zbekiston banklarining MFO kodlari seed'i
-- `uz_utils.mfo_to_bank_name(column)` macro'si
+### So'm kursi tarixi
+- `seeds/uzs_exchange_rates.csv` — USD/EUR kurslar tarixi
+- Denominatsiya (2017) bilan birga
 
 ---
 
