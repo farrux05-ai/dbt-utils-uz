@@ -19,8 +19,7 @@ Har bir jamoa bu ishni o'z loyihasida qayta yozadi. **`uz_utils`** — shu takro
 ```yaml
 # packages.yml
 packages:
-  - git: "https://github.com/<sizning-username>/dbt-uz.git"
-    subdirectory: "uz_utils"
+  - git: "https://github.com/farrux05-ai/dbt-utils-uz.git"
     revision: main
 ```
 
