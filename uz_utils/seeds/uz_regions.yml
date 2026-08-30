@@ -1,0 +1,26 @@
+version: 2
+
+seeds:
+  - name: uz_regions
+    description: >
+      O'zbekistonning 14 ta rasmiy hududi (12 viloyat + Toshkent shahri +
+      Qoraqalpog'iston Respublikasi), ISO 3166-2:UZ kodlari bilan.
+
+      DIQQAT: 10 ta kod (AN, BU, FA, JI, NG, NW, QR, TK, TO, XO) Wikipedia'ning
+      ISO 3166-2:UZ sahifasidan bevosita tasdiqlangan. Qolgan 4 tasi
+      (QA, SA, SI, SU) standart, keng tarqalgan nomlash patterniga mos —
+      ishlab chiqarishga qo'yishdan oldin https://www.iso.org/obp orqali
+      tasdiqlashni tavsiya qilaman.
+    columns:
+      - name: iso_code
+        description: ISO 3166-2:UZ kodi (masalan UZ-TK)
+      - name: name_uz
+        description: Hudud nomi (lotin yozuvida, rasmiy shakl)
+      - name: name_en
+        description: Hudud nomi inglizchada (keng tarqalgan transliteratsiya)
+      - name: name_ru
+        description: Hudud nomi ruschada
+      - name: category
+        description: viloyat / respublika / shahar
+      - name: capital_uz
+        description: Hudud markazi

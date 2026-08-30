@@ -1,0 +1,7 @@
+target/
+dbt_packages/
+logs/
+.DS_Store
+integration_tests/target/
+integration_tests/dbt_packages/
+integration_tests/logs/
