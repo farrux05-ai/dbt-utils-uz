@@ -1,10 +1,10 @@
-# uz_utils
+# 🇺🇿 uz_utils
 
 [![dbt](https://img.shields.io/badge/dbt-%3E%3D1.6-orange.svg)](https://getdbt.com)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](https://github.com/farrux05-ai/dbt-utils-uz/pulls)
 
-> **`uz_utils`** — O'zbekiston ma'lumotlar ekotizimi uchun mo'ljallangan dbt macro'lar va ma'lumotnomalar (seeds) to'plami. `dbt_utils` standarti va arxitekturasi asosida qurilgan.
+> **`uz_utils`** 🇺🇿 — O'zbekiston ma'lumotlar ekotizimi uchun mo'ljallangan dbt macro'lar va ma'lumotnomalar (seeds) to'plami. `dbt_utils` standarti va arxitekturasi asosida qurilgan.
 
 ---
 
