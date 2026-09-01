@@ -107,6 +107,9 @@ Kutubxona faqat **`macros`**, **`seeds`** va **`integration_tests`** dan tashkil
 |---|---|---|
 | `uz_utils.format_uzs(col)` | Summani o'qilishi qulay minglik ajratgichlar bilan formatlash | `1250000` → `'1 250 000'` |
 | `uz_utils.is_post_denomination(col)` | 2017-yilgi so'm denominatsiyasidan keyingi sana ekanligini flag qilish | `DATE '2018-01-01'` → `true` |
+| `uz_utils.calculate_vat_from_total(amt, vat_rate=12)` | QQS kiritilgan summadan QQS miqdorini ajratish (standart 12%) | `112000` → `12000` |
+| `uz_utils.calculate_net_amount(amt, vat_rate=12)` | QQS kiritilgan summadan QQSsiz sof (net) summani hisoblash | `112000` → `100000` |
+| `uz_utils.add_vat(net_amt, vat_rate=12)` | QQSsiz (net) summa ustiga QQS qo'shib brutto summani aniqlash | `100000` → `112000` |
 
 ---
 
