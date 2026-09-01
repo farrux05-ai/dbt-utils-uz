@@ -123,35 +123,85 @@ Kutubxona faqat **`macros`**, **`seeds`** va **`integration_tests`** dan tashkil
 
 ---
 
-## 💻 Amaliy Foydalanish Misoli
+## 💻 Loyihadan Foydalanish Yo'riqnomasi (Step-by-Step)
 
-Staging qatlamidagi dbt modelida macro'lardan foydalanish:
+`uz_utils` kutubxonasidan dbt loyihangizda foydalanish **3 ta asosiy bosqichda** amalga oshiriladi:
+
+### 1-bosqich: Staging modellarida ma'lumotlarni tozalash (Validation & Normalization)
+
+Xom (raw) ma'lumotlarni formatlash, tekshirish va PII ma'lumotlarni maskalash:
 
 ```sql
 -- models/staging/stg_customers.sql
 select
     customer_id,
 
-    -- Shaxsiy identifikatorlar
+    -- 1. Shaxsiy identifikatorlarni formatlash va validatsiya
     {{ uz_utils.is_valid_pinfl('raw_pinfl') }}             as is_valid_pinfl,
     {{ uz_utils.pinfl_gender('raw_pinfl') }}               as gender,
     {{ uz_utils.pinfl_birth_date('raw_pinfl') }}           as birth_date,
     {{ uz_utils.normalize_passport('raw_passport') }}      as passport_number,
 
-    -- Aloqa va Geografiya
+    -- 2. Telefon raqami va manzillarni standartlashtirish
     {{ uz_utils.normalize_uz_phone('raw_phone') }}          as phone_number,
     {{ uz_utils.normalize_region_name('raw_region') }}     as region_iso_code,
     {{ uz_utils.normalize_district_name('raw_district') }} as district_name,
 
-    -- To'lovlar va Ish kunlari
-    {{ uz_utils.detect_payment_system('payment_channel') }} as payment_system,
-    {{ uz_utils.is_working_day('created_at') }}             as is_created_on_working_day,
-
-    -- Mart/Analytics uchun PII maskalash
+    -- 3. Maxfiy ma'lumotlarni (PII) niqoblash
     {{ uz_utils.mask_pinfl('raw_pinfl') }}                 as pinfl_masked,
     {{ uz_utils.mask_phone('raw_phone') }}                  as phone_masked
 
 from {{ source('raw_data', 'customers') }}
+```
+
+### 2-bosqich: Moliya va to'lov modellari (`fct_orders`, `fct_payments`)
+
+QQS (NDS) hisoblash, to'lov kanallarini aniqlash va ish kunlarini tekshirish:
+
+```sql
+-- models/marts/fct_orders.sql
+select
+    order_id,
+    customer_id,
+    order_date,
+
+    -- Ish kuni va bayramni aniqlash
+    {{ uz_utils.is_working_day('order_date') }}            as is_working_day,
+    {{ uz_utils.is_uz_holiday('order_date') }}             as is_holiday,
+
+    -- To'lov tizimi va karta tarmog'ini aniqlash
+    {{ uz_utils.detect_payment_system('payment_channel') }} as payment_system,
+    {{ uz_utils.detect_card_network('card_number') }}      as card_network,
+
+    -- Summa va QQS (12%) hisoblash
+    total_amount_uzs,
+    {{ uz_utils.calculate_vat_from_total('total_amount_uzs') }} as vat_amount_uzs,
+    {{ uz_utils.calculate_net_amount('total_amount_uzs') }}    as net_amount_uzs,
+    {{ uz_utils.format_uzs('total_amount_uzs') }}              as total_amount_formatted
+
+from {{ ref('stg_orders') }}
+```
+
+### 3-bosqich: Ma'lumotnomalar (Seeds) bilan JOIN qilish
+
+Kutubxonadagi `uz_regions`, `uz_districts`, `uz_banks` ma'lumotnomalaridan loyihangizda foydalanish:
+
+```sql
+-- models/marts/dim_customers.sql
+select
+    c.customer_id,
+    c.phone_number,
+    r.name_uz      as region_name,
+    r.capital_uz   as region_capital,
+    b.bank_name_uz as customer_bank_name
+
+from {{ ref('stg_customers') }} c
+-- Viloyatlar seed'i bilan join (ISO kodi bo'yicha)
+left join {{ ref('uz_utils', 'uz_regions') }} r
+    on c.region_iso_code = r.iso_code
+-- Banklar seed'i bilan join (MFO kodi bo'yicha)
+left join {{ ref('uz_utils', 'uz_banks') }} b
+    on c.bank_mfo = b.mfo_code
 ```
 
 ---
