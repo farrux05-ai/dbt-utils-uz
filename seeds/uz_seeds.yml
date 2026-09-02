@@ -59,32 +59,5 @@ seeds:
       - name: swift_code
         description: Bank SWIFT/BIC kodi (xalqaro o'tkazmalar uchun)
 
-  - name: uz_holidays
-    description: >
-      O'zbekiston Respublikasining rasmiy milliy bayramlari.
-      Manba: O'zR Mehnat kodeksi va hukumat qarorlari.
-      2024-2026 yillarni qamrab oladi.
-    config:
-      column_types:
-        holiday_date: date
-        is_annual_recurring: boolean
-    columns:
-      - name: holiday_date
-        description: Bayram sanasi
-        tests:
-          - not_null
-          - unique
-      - name: holiday_name_uz
-        description: Bayram nomi (o'zbekcha)
-        tests:
-          - not_null
-      - name: holiday_name_en
-        description: Bayram nomi (inglizcha)
-        tests:
-          - not_null
-      - name: is_annual_recurring
-        description: Har yili bir xil sanada takrorlanadimi
-        tests:
-          - not_null
-          - accepted_values:
-              values: [true, false]
+# DIQQAT: uz_holidays seed hujjati alohida faylda — seeds/uz_holidays.yml.
+# Bir resursni ikki marta ta'riflab bo'lmaydi (dbt parse xatosi beradi).
