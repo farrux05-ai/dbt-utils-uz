@@ -45,7 +45,7 @@
       then 'uzum'
     when {{ v }} in ('paynet', 'paynet.uz')
       then 'paynet'
-    when {{ v }} in ('bank_transfer', 'bank transfer', 'bank o\'tkazma',
+    when {{ v }} in ('bank_transfer', 'bank transfer', 'bank o''tkazma',
                      'wire transfer', 'swift', 'naqdsiz')
       then 'bank_transfer'
     when {{ v }} in ('cash', 'naqd', 'naqd pul')
