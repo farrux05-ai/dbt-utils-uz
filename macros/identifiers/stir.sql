@@ -12,5 +12,5 @@
 #}
 
 {% macro is_valid_stir(column) -%}
-  ( {{ uz_utils.uz_regexp_like(column, '^[0-9]{9}$') }} )
+  coalesce({{ uz_utils.uz_regexp_like(column, '^[0-9]{9}$') }}, false)
 {%- endmacro %}

@@ -208,14 +208,28 @@ left join {{ ref('uz_utils', 'uz_banks') }} b
 
 ## 🌐 DB Warehouse Support
 
-Barcha macro'lar cross-database arxitekturasi (`adapter.dispatch`) asosida yozilgan va quyidagi omborlarda ishlaydi:
+Barcha macro'lar cross-database arxitekturasi (`adapter.dispatch`) asosida yozilgan.
 
-- **PostgreSQL** ✅
-- **Snowflake** ✅
-- **Google BigQuery** ✅
-- **Amazon Redshift** ✅
-- **Apache Spark / Databricks** ✅
-- **ClickHouse** ⚠️ *(Sinov bosqichida)*
+| Ombor | Holat | Izoh |
+|---|---|---|
+| **PostgreSQL** | ✅ CI'da avtomatik sinaladi | Har bir PR'da `dbt build` ishga tushadi |
+| **Snowflake** | ⚠️ Dispatch yozilgan, sinalmagan | CI uchun hisob ma'lumotlari kerak |
+| **Google BigQuery** | ⚠️ Dispatch yozilgan, sinalmagan | CI uchun hisob ma'lumotlari kerak |
+| **Amazon Redshift** | ⚠️ Dispatch yozilgan, sinalmagan | `uz_safe_cast` u yerda oddiy CAST — pastdagi izohga qarang |
+| **Apache Spark / Databricks** | ⚠️ Dispatch yozilgan, sinalmagan | CI uchun klaster kerak |
+| **ClickHouse** | ⚠️ Dispatch yozilgan, sinalmagan | |
+
+> **Halollik haqida.** Faqat PostgreSQL avtomatik sinaladi. Qolgan omborlar
+> uchun `adapter.dispatch` implementatsiyalari yozilgan, lekin ular haqiqiy
+> omborda ishga tushirib ko'rilmagan. Agar sizda Snowflake / BigQuery /
+> Databricks bo'lsa — `integration_tests` ni o'sha yerda ishga tushirib,
+> natijani issue sifatida yozing yoki CI'ga service qo'shib PR yuboring.
+> "✅" belgisini faqat CI tasdiqlagandan keyin qo'yamiz.
+
+**PostgreSQL / Redshift cheklovi:** bu omborlarda `TRY_CAST` mavjud emas.
+Shu sababli `uz_safe_cast()` u yerda oddiy `CAST` ga tushadi, va xavfsizlik
+chaqiruvchi macro ichidagi `CASE` tekshiruvi hisobiga ta'minlanadi
+(masalan `pinfl_birth_date` avval formatni va oy/kun diapazonini tekshiradi).
 
 ---
 
@@ -226,10 +240,15 @@ Paketdagi barcha macro va seed'lar maxsus avtomatik testlar bilan ta'minlangan. 
 ```bash
 cd integration_tests
 dbt deps
-dbt seed
-dbt run
-dbt test
+dbt build     # seed → run → test, to'g'ri tartibda
 ```
+
+> **MUHIM:** `dbt run` ni yolg'iz ishlatmang. Seed'ga murojaat qiluvchi
+> macro'lar (`is_uz_holiday`, `is_working_day`, `mfo_to_bank_name`,
+> `mfo_to_bank_short`) qiymatlarni **compile paytida** o'qiydi, ya'ni
+> `uz_banks` va `uz_holidays` jadvallari omborda allaqachon mavjud
+> bo'lishi kerak. `dbt build` tartibni o'zi to'g'ri hal qiladi.
+> Sabablari uchun: [`macros/cross_db/_seed.sql`](macros/cross_db/_seed.sql).
 
 ---
 
@@ -238,7 +257,10 @@ dbt test
 - [ ] **IBAN / Bank hisob raqami validatsiyasi** (20 xonali milliy hisobraqamlar).
 - [ ] **OKED klassifikatori** (`seeds/uz_oked.csv` va `is_valid_oked` macro'si).
 - [ ] **Telefon operatorlari ma'lumotnomasi** (MNC kodlari bo'yicha operator nomi).
-- [ ] **QQS (NDS) hisoblash yordamchi macro'lari**.
+- [x] ~~**QQS (NDS) hisoblash yordamchi macro'lari**~~ — v0.2'da qo'shildi.
+- [ ] **Ish kunlari kalendari**: bayram dam olish kuniga to'g'ri kelganda ko'chirish qoidasi,
+      `uz_add_business_days()`, `uz_business_days_between()` (T+N hisob-kitoblar uchun).
+- [ ] **Luhn algoritmi** bo'yicha karta raqami validatsiyasi (`is_valid_card_number`).
 
 ---
 

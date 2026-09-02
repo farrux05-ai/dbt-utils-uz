@@ -22,7 +22,7 @@
 
 {% macro is_valid_passport(column) -%}
   {#- Standart ko'rinish: "AB 1234567" — 2 bosh harf, bo'sh joy, 7 raqam -#}
-  {{ uz_utils.uz_regexp_like(column, '^[A-Z]{2} [0-9]{7}$') }}
+  coalesce({{ uz_utils.uz_regexp_like(column, '^[A-Z]{2} [0-9]{7}$') }}, false)
 {%- endmacro %}
 
 

@@ -28,7 +28,7 @@ ps_results as (
         exp,
         {{ uz_utils.detect_payment_system('raw') }} as act
     from ps_cases
-    where {{ uz_utils.detect_payment_system('raw') }} != exp
+    where {{ uz_utils.detect_payment_system('raw') }} is distinct from exp
 ),
 
 -- is_valid_mfo
@@ -47,7 +47,7 @@ mfo_results as (
         exp_valid,
         {{ uz_utils.is_valid_mfo('mfo') }} as act_valid
     from mfo_cases
-    where {{ uz_utils.is_valid_mfo('mfo') }} != exp_valid
+    where {{ uz_utils.is_valid_mfo('mfo') }} is distinct from exp_valid
 ),
 
 -- format_uzs
@@ -64,7 +64,7 @@ uzs_results as (
         exp,
         {{ uz_utils.format_uzs('amt') }} as act
     from uzs_cases
-    where {{ uz_utils.format_uzs('amt') }} != exp
+    where {{ uz_utils.format_uzs('amt') }} is distinct from exp
 ),
 
 -- is_post_denomination
@@ -80,7 +80,7 @@ denom_results as (
         exp,
         {{ uz_utils.is_post_denomination('d') }} as act
     from denom_cases
-    where {{ uz_utils.is_post_denomination('d') }} != exp
+    where {{ uz_utils.is_post_denomination('d') }} is distinct from exp
 ),
 
 -- mask_pinfl
@@ -94,7 +94,7 @@ pii_results as (
         exp_mask,
         {{ uz_utils.mask_pinfl('pinfl') }} as act_mask
     from pii_cases
-    where {{ uz_utils.mask_pinfl('pinfl') }} != exp_mask
+    where {{ uz_utils.mask_pinfl('pinfl') }} is distinct from exp_mask
 )
 
 select 'detect_payment_system' as macro_name, raw::text as input, exp as expected, act as actual from ps_results

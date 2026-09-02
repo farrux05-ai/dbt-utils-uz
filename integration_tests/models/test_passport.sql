@@ -32,7 +32,7 @@ results as (
 select *
 from results
 where
-    act_valid != exp_valid
+    act_valid is distinct from exp_valid
     or (act_norm is null and exp_norm is not null)
     or (act_norm is not null and exp_norm is null)
-    or act_norm != exp_norm
+    or act_norm is distinct from exp_norm

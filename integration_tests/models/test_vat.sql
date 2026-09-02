@@ -53,6 +53,6 @@ results as (
 select *
 from results
 where
-    act_vat   != exp_vat
-    or act_net   != exp_net
-    or act_added != exp_added
+    act_vat   is distinct from exp_vat
+    or act_net   is distinct from exp_net
+    or act_added is distinct from exp_added
