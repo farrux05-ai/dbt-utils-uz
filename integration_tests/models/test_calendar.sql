@@ -39,5 +39,5 @@ results as (
 select *
 from results
 where
-    act_holiday != exp_holiday
-    or act_working  != exp_working
+    act_holiday is distinct from exp_holiday
+    or act_working  is distinct from exp_working

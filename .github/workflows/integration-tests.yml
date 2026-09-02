@@ -1,0 +1,73 @@
+name: integration tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  postgres:
+    name: dbt build (postgres ${{ matrix.dbt-version }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        dbt-version: ["1.7.*", "1.9.*"]
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: uz_utils_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "dbt-core==${{ matrix.dbt-version }}" "dbt-postgres==${{ matrix.dbt-version }}"
+
+      - name: Write profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml <<'EOF'
+          uz_utils:
+            target: pg
+            outputs:
+              pg:
+                type: postgres
+                host: localhost
+                port: 5432
+                user: postgres
+                password: postgres
+                dbname: uz_utils_test
+                schema: dbt_uz
+                threads: 4
+          EOF
+
+      # `dbt build` seed'larni modellardan OLDIN quradi — bu SHART, chunki
+      # seed'ga murojaat qiluvchi macro'lar compile paytida seed jadvalini
+      # o'qiydi (macros/cross_db/_seed.sql'ga qarang).
+      - name: dbt deps
+        working-directory: integration_tests
+        run: dbt deps
+
+      - name: dbt build
+        working-directory: integration_tests
+        run: dbt build
